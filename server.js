@@ -6,8 +6,8 @@ const config = require("./src/config/env.js");
 const { engine } = require ('express-handlebars');  
 const { sendEMail } = require("./src/utils/mailer.js");
 const expressWinston = require('express-winston'); 
-const Router = require("./src/routes/index.js");
 const { defaultAdminAccount } = require("./src/controllers/auth.controller.js");
+const Router = require("./src/routes/index.js");
 
 appServer.engine('.handlebars', engine({extname: '.handlebars'}));
 appServer.set('view engine', '.handlebars');

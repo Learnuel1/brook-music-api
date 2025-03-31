@@ -62,6 +62,6 @@ const AccountSchema = new Schema({
         default: CONSTANTS.ACCOUNT_STATUS_OBJ.unverified,
     },
     
-}, {safe: true, timestamps: true, versionKey: false});
+}, { timestamps: true, versionKey: false});
 const AccountModel = model("Account", AccountSchema);
 exports.AccountModel = AccountModel;

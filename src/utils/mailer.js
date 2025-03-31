@@ -3,7 +3,7 @@ const { domainMail, mailAuth } = require("./mail.auth");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 const config = require("../config/env");
-const { App_CONFIG, CONSTANTS } = require("../config");
+const { App_CONFIG } = require("../config");
 
 const handlebarsOptions = {
   viewEngine: {
@@ -46,7 +46,7 @@ let transporter = nodemailer.createTransport(
           username,
           userType, grubbexDept, title
         );
-        transporter.sendMail(mail, (err, data) => {
+        transporter.sendMail(mail, (err) => {
           if (err) {
             return reject(err);
           }
@@ -59,38 +59,33 @@ let transporter = nodemailer.createTransport(
   };
   
 // password recovery
-const passwordMailOptions = (sendTo, subject, uniqueString, title, message,grubbexDept, otp) => {
+const passwordMailOptions = (sendTo, subject, uniqueString, title, message, team, otp) => {
   return {
-    from: `${CONFIG.APP_NAME} ${domainMail.mail()}`,
+    from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
     to: sendTo,
     subject,
     template: "password_recovery",
     context: { 
       link: otp? " ": `${config.FRONTEND_ORIGIN_URL}/password-recovery?ref=${uniqueString}`,
-      company: `${CONFIG.APP_NAME}`,
+      company: `${App_CONFIG.APP_NAME}`,
       title,
-      message,
-      grubbexDept,
+      message, 
+      team,
       buttonText: otp? otp: "Reset Password",
-      website:`${config.FRONTEND_ORIGIN_URL}`,
-      facebook:`${config.FACEBOOK}`,
-      x:`${config.X}`,
-      linkedin:`${config.LINKEDIN}`,
-      instagram:`${config.INSTAGRAM}`
     },
   };
 };
 
 exports.recoveryPasswordMailHandler = async (
   email, 
-  subject, uniqueString, title, message,grubbexDept, otp
+  subject, uniqueString, title, message,team, otp
 ) => {
   return new Promise((resolve, reject) => {
     const mail = passwordMailOptions(
       email,
-      subject, uniqueString, title, message,grubbexDept, otp
+      subject, uniqueString, title, message,team, otp
     );
-    transporter.sendMail(mail, (err, data) => {
+    transporter.sendMail(mail, (err) => {
       if (err) { 
         return reject(err);
       }
@@ -98,13 +93,7 @@ exports.recoveryPasswordMailHandler = async (
     });
   });
 };
-
-
-
-
-
-
-
+ 
 // GENERAL EMAIL 
 const sendEmailOptions = (sendTo, subject, message, attachment) => {
   return {
@@ -120,7 +109,7 @@ exports.sendEMailHandler = (sendTo, subject, message, attachment=null)=> {
     const mail = sendEmailOptions(
       sendTo, subject, message, attachment
     );
-    transporter.sendMail(mail, (err, data) => {
+    transporter.sendMail(mail, (err) => {
       if (err) { 
         return reject(err);
       }

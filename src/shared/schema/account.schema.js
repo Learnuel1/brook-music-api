@@ -1,7 +1,7 @@
 const { z } = require("zod")
 const { CONSTANTS } = require("../../config")
 
-exports.ZAccountSchema: z.object({
+exports.ZAccountSchema = z.object({
     userId: z.string({
         description: "Account user ID",
         required_error: "User ID is required",
@@ -55,4 +55,33 @@ exports.ZAccountSchema: z.object({
         required_error: "Status is required",
         invalid_type_error: "Status must be a string",
     }).default(CONSTANTS.ACCOUNT_STATUS_OBJ.unverified),
+});
+
+exports.ZLoginSchema = z.object({
+    email: z.string({
+        description: "Email on account",
+        required_error: "Email is required",
+        invalid_type_error: "Email is invalid",
+    })
+    .email()
+    .trim(),
+    password: z.string({
+        description: "Account password",
+        required_error: "Password is required",
+    })
+    .min(8, { message: "Password must be at least 8 characters"})
+})
+
+exports.ZResetLoginSchema = z.object({
+    currentPassword: z.string({
+        description: "Current password",
+        required_error: "Current password is required",
+        invalid_type_error: "Current password  is invalid",
+    }) 
+    .min(8,  { message: "Purrent password must be at least 8 characters"}),
+    newPassword: z.string({
+        description: "New  password",
+        required_error: "New Password is required",
+    })
+    .min(8, { message: "New password must be at least 8 characters"})
 })

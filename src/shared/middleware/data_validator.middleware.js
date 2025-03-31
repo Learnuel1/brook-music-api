@@ -1,16 +1,21 @@
-const { APIError } = require("../utils/apiError");
 const Schemas = require("../schema");
 const { hashSync } = require("bcryptjs");
 const { default: mongoose, Types, ObjectId } = require("mongoose");
 const { v4: uuidv4 } = require('uuid');
-const { findStore } = require("../../api/store/service");
 const { isStrongPassword, isPhoneNumberValid, shortIdGen } = require("../../utils/Generator");
+const { APIError } = require("../../utils/apiError");
 module.exports = {
-  validateRequestData(schema, data ={}) { 
+  validateRequestData(schema, data = {}) { 
     return  async (req, res, next) => {
       try{ 
-    
-    
+        if ( schema === "ZAccountSchema") {
+          req.body.userId = `BM${shortIdGen(13)}`;
+          if(!isStrongPassword(req.body.password)) return next(APIError.badRequest("Password is weak"));
+        }
+        if ( schema === "ZRestLoginSchema") {
+          if(!isStrongPassword(req.body.newPassword)) return next(APIError.badRequest("New Password is weak"));
+        }
+
     Schemas[schema].parse(req.body); 
      next();
    }catch(error){
@@ -37,8 +42,7 @@ module.exports = {
     if(!userId) { 
       req.body.userId = `BM${shortIdGen()}`;
      }
-    //  const checkDuplicate = await userExist(req.body);
-    //  if(checkDuplicate) return next(APIError.badRequest(`${checkDuplicate.field}: is not available`)); 
+     
      next();
    }catch(error){
      next(error);  

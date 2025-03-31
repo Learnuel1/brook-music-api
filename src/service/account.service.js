@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const { CONSTANTS } = require("../config");
 const { AccountModel } = require("../models/account.model");
+const TemporalModel = require("../models/temporal.model");
 
 exports.create = async (details) => {
     try{
@@ -19,6 +20,13 @@ exports.emailExists = async (email) => {
 exports.accountExistByToken = async ( refreshToken ) => {
     try{
         return await AccountModel.findOne({refreshToken})
+    } catch ( error ) {
+        return {error: error.message };
+    }
+}
+exports.accountExistById = async ( id ) => {
+    try {
+        return await AccountModel.findById(id)
     } catch ( error ) {
         return {error: error.message };
     }
@@ -64,3 +72,10 @@ exports.defaultRegistration = async (details) => {
       return {error};
     }
   };
+  exports.removeTemp = async (query) => {
+    try {
+        return await TemporalModel.findOneAndDelete(query)
+    } catch ( error ) {
+        return {error: error.message}
+    }
+  } 
