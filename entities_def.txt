@@ -1,0 +1,14 @@
+Account
+ - _id                  -> ObjectId
+ - userId               -> String
+ - firstName            -> String
+ - lastName             -> String
+ - email                -> String
+ - password             -> String
+ - type                 -> enum["user", "artist", "admin"]
+ - refreshToken         -> [String]
+ - status               -> enum ["unverified", "verified"]
+ - createdAt            -> Date
+ - updatedAt            -> Date
+
+Events
