@@ -1,3 +1,9 @@
+TemporalAccount 
+  - _id          -> ObjectId
+  - email        -> String
+  - refreshToken -> [String] 
+  - otp          -> String
+  
 Account
  - _id                  -> ObjectId
  - userId               -> String
@@ -5,6 +11,8 @@ Account
  - lastName             -> String
  - email                -> String
  - password             -> String
+ - phoneNumber          -> String
+ - countryCode          -> String
  - type                 -> enum["user", "artist", "admin"]
  - refreshToken         -> [String]
  - status               -> enum ["unverified", "verified"]

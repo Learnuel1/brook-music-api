@@ -1,4 +1,4 @@
-exports.CONFIG = {
+exports.App_CONFIG = {
     APP_NAME: "BROOK-MUSIC",
   };
    

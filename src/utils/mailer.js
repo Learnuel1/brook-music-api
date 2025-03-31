@@ -1,9 +1,9 @@
 const path = require("path")
 const { domainMail, mailAuth } = require("./mail.auth");
-const { CONFIG, CONSTANTS } = require("../../config");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
-const config = require("../../config/env");
+const config = require("../config/env");
+const { App_CONFIG, CONSTANTS } = require("../config");
 
 const handlebarsOptions = {
   viewEngine: {
@@ -25,24 +25,14 @@ let transporter = nodemailer.createTransport(
   //Registration completed
    const registrationMailOptions = (sendTo, subject, username, userType, team ="team", title) => {
     return {
-      from: `${CONFIG.APP_NAME} ${domainMail.mail()}`,
+      from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
       to: sendTo,
       subject,
       template: "registration",
       context: { 
         username, 
         title, 
-        team,
-        facebook:`${config.FACEBOOK}`,
-        x:`${config.X}`,
-        linkedin:`${config.LINKEDIN}`,
-        instagram:`${config.INSTAGRAM}`,
-        unsubscribe:`${config.FRONTEND_ORIGIN_URL}/unsubscribe?email=${sendTo}`,
-        home:`${config.FRONTEND_ORIGIN_URL}/home`,
-        login:`${config.FRONTEND_ORIGIN_URL}/login`,
-        contact:`${config.FRONTEND_ORIGIN_URL}/contact-us`,
-        supportEmail:`${config.SUPPORT_EMAIL}`, 
-        downloadLink: `${userType === CONSTANTS.ACCOUNT_TYPE[0] || userType === CONSTANTS.ACCOUNT_TYPE[2] ? "block" : "none"}`
+        team, 
       },
     };
   };
@@ -118,7 +108,7 @@ exports.recoveryPasswordMailHandler = async (
 // GENERAL EMAIL 
 const sendEmailOptions = (sendTo, subject, message, attachment) => {
   return {
-    from: `${CONFIG.APP_NAME} ${domainMail.mail()}`,
+    from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
     to: sendTo,
     subject,
     // text: message,
