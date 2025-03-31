@@ -1,21 +1,12 @@
 exports.META = { 
-  PAYSTACK_SERVICE: "paystack", 
-  FULTTER_WAVE_SERVICE: "flutterwave",
+  PAY_STACK_SERVICE: "paystack",  
   MAIL:'mail-service',
   AUTH: "authentication",
-  ACCOUNT: "account-service",
-  INVITATION: "invitation-service",
-  ITEM: "item",
+  ACCOUNT: "account-service", 
   CLOUDINARY: "cloudinary", 
   PAYMENT:"payment",
-  KYC:"kyc",
-  STORE: "store",
-  SUBSCRIPTION: "subscription",
-  NOTIFY: "notification",
-  PREFERENCE: "preference",
-  CHAT: "chat",
-  TICKET: "ticket",
-  FAQ: "FAQ",
+  EVENT:"event", 
+  SUBSCRIPTION: "subscription",  
   
 }
 

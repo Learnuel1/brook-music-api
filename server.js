@@ -7,6 +7,7 @@ const { engine } = require ('express-handlebars');
 const { sendEMail } = require("./src/utils/mailer.js");
 const expressWinston = require('express-winston'); 
 const Router = require("./src/routes/index.js");
+const { defaultAdminAccount } = require("./src/controllers/auth.controller.js");
 
 appServer.engine('.handlebars', engine({extname: '.handlebars'}));
 appServer.set('view engine', '.handlebars');
@@ -22,7 +23,7 @@ appServer.use(expressWinston.logger(appLogger))
 appServer.listen(PORT, async () => {
   try {
     await dbConnect.MongoDB();
-    // await defaultAdminAccount();
+    await defaultAdminAccount();
      
     appLogger.info(`server running on port ${PORT}`, {service:"application"});
   } catch (error) {

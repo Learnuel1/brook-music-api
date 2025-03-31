@@ -1,4 +1,6 @@
-const { ZAccountSchema } = require("./schema/account.schema")
+const Controllers = require("../controllers");
+const resBuilder = require("../utils/seedData")
 module.exports = {
-    ZAccountSchema,
+    Controllers,
+    resBuilder,
 }

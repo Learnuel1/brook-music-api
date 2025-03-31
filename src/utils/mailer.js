@@ -110,8 +110,7 @@ const sendEmailOptions = (sendTo, subject, message, attachment) => {
   return {
     from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
     to: sendTo,
-    subject,
-    // text: message,
+    subject, 
     html: message,
     attachments:attachment,
   };

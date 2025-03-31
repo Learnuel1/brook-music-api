@@ -9,7 +9,6 @@
       "start-prod": "node ./prod_build/main.js",
       "build:prod": "webpack --config ./webpack.prod.js --mode production",
       "prettier": "prettier --write src/**/*.{js,jsx,ts,tsx}"
-
    },
    "keywords": [],
    "author": "",
@@ -32,6 +31,7 @@
       "nodemailer-express-handlebars": "^6.1.0",
       "nodemailer-mailgun-transport": "^2.1.5",
       "nodemon": "^3.1.4",
+      "ulid": "^3.0.0",
       "webpack": "^5.94.0",
       "winston": "^3.17.0",
       "winston-mongodb": "^5.1.1",
