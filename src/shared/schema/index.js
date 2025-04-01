@@ -1,4 +1,5 @@
 const { ZAccountSchema, ZLoginSchema } = require("./account.schema")
+const { ZEventSchema } = require("./event.schema")
 const { ZProfileSchema } = require("./profile.schema")
 const { ZResetLoginSchema } = require("./resetpassword.schema")
 module.exports = {
@@ -6,4 +7,5 @@ module.exports = {
     ZLoginSchema, 
     ZResetLoginSchema,
     ZProfileSchema,
+    ZEventSchema,
 }

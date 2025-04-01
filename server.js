@@ -4,7 +4,6 @@ const appLogger = require("./src/logger/index.js");
 const { errorMiddleWareModule } = require("./src/middlewares/index.js"); 
 const config = require("./src/config/env.js");
 const { engine } = require ('express-handlebars');  
-const { sendEMail } = require("./src/utils/mailer.js");
 const expressWinston = require('express-winston'); 
 const { defaultAdminAccount } = require("./src/controllers/auth.controller.js");
 const Router = require("./src/routes/index.js");
