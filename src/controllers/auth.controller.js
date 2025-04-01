@@ -1,11 +1,11 @@
-const { hashSync, compareSync } = require("bcryptjs");
-const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount } = require("../service/interface");
-const { isValidEmail, shortIdGen, generateStrongPassword, isStrongPassword } = require("../utils/Generator");
+const { hashSync, compareSync, hash } = require("bcryptjs");
+const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount, createTemporalInfo } = require("../service/interface");
+const { isValidEmail, shortIdGen, generateStrongPassword, isStrongPassword, OTPGen } = require("../utils/Generator");
 const { CONSTANTS, App_CONFIG } = require("../config");
 const logger = require("../logger");
 const { META, ERROR_FIELD } = require("../utils/actions");  
 const config = require("../config/env");
-const { sendEMailHandler } = require("../utils/mailer");
+const { sendEMailHandler, recoveryPasswordMailHandler } = require("../utils/mailer");
 const { APIError } = require("../utils/apiError");
 const jwt = require("jsonwebtoken");
 const { resBuilder } = require("../shared");
@@ -217,19 +217,19 @@ exports.logout = async (req, res, next) => {
 
 
 exports.handleRefreshToken = async (req, res, next) => {
-	let token = req.cookies?.grub_ex;
+	let token = req.cookies?.BroOk_m;
 	if (!token) token = req.headers?.authorization?.split(' ')[1];
 	if (!token) token = req.headers?.cookie?.split('=')[1];
 	if (!token) return next(APIError.unauthenticated());
 	const { refreshToken } = req.body;
+	if (!refreshToken)
+		return next(APIError.badRequest('RefreshToken is required'));
+	const foundUser = await getAccountByToken(refreshToken);
 	res.clearCookie('BroOk_m', {
 		httpOnly: true,
 		sameSite: 'None',
 		secure: true,
 	});
-	if (!refreshToken)
-		return next(APIError.badRequest('RefreshToken is required'));
-	const foundUser = await getAccountByToken(token);
 	// Detected refresh toke reuse
 	if (!foundUser) {
 		const check = jwt.decode(token, config.TOKEN_SECRETE);
@@ -288,19 +288,15 @@ exports.handleRefreshToken = async (req, res, next) => {
 
 exports.resetLogin = async (req, res, next) => {
 	try {
-		const { currentPassword, newPassword } = req.body;
-		if (!req.userId) return next(APIError.unauthenticated());
-		if (!currentPassword)
-			return next(APIError.badRequest('Provide current password'));
-		if (!newPassword) return next(APIError.badRequest('Provide new password'));
-		if (!isStrongPassword(newPassword)) return next(APIError.badRequest('Password is weak'));
+		 
 		const check = await userExistById(req.user);
 		if (!check) return res.status(404).json({ error: 'Incorrect password' });
 		if (check.error) return res.status(404).json(check.error);
-		const verify = compareSync(currentPassword, check.password);
+		const verify = compareSync(req.body.currentPassword, check.password);
 		if (!verify)
 			return next(APIError.customError('current password is incorrect', 400));
-		const hashedPass = hashSync(newPassword, 12);
+		const hashedPass = hashSync(req.body.newPassword, 12);
+		if(compareSync(req.body.newPassword, check.password)) return next(APIError.badRequest("Choose an entirely new password"));
 		const reset = await updateAccount(req.user, {password: hashedPass});
 		if (!reset) return next(APIError.badRequest("Password reset failed, try again"));
 		if (reset?.error) return next(APIError.badRequest(reset.error, 400)); 
@@ -324,3 +320,42 @@ exports.register = async (req, res, next ) => {
         next (error);
     }
 }
+
+exports.sendRecoverMail = async (req, res, next) => {
+	try {
+	  const { email } = req.body;
+	  if (!email) return next(APIError.badRequest('Email or Phone number is required'));
+	  const userExist = await emailExist(email);
+	  if (!userExist)
+		return next(APIError.notFound(ERROR_FIELD.ACCOUNT_NOT_FOUND));
+	  if (userExist?.error) return next(APIError.badRequest(userExist.error)); 
+	  const OTP = OTPGen();
+	  const expires = 2;
+	   const payload = {email, id:userExist.userId};
+	   const token = jwt.sign(payload, config.TOKEN_SECRETE,{expiresIn:`${expires}m`});
+	  const info = {
+		email,
+		token,
+		otp: hashSync(OTP, 10),
+	  };
+	  const save = await createTemporalInfo(info);
+	  if (!save)
+		return next(APIError.notFound(ERROR_FIELD.NOT_FOUND));
+	  if (save?.error) return next(APIError.badRequest(save.error));
+	  logger.info('Recovery info saved successfully', { service: META.ACCOUNT}); 
+	  const result = await recoveryPasswordMailHandler(
+		email,
+		"Password Recovery" , "Password Recovery OTP" ,
+		expires, OTP, userExist.firstName
+	  );
+	  if (result.error)
+		return next(APIError.badRequest('Recovery mail failed to send'));
+	  logger.info('Recovery mail sent successfully', { service: META.MAIL});
+	  res.status(200).json({
+		...result,
+		msg: 'Recovery mail sent successfully',
+	  });
+	} catch (error) {
+	  next(error);
+	}
+  };

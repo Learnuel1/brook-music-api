@@ -8,6 +8,7 @@ const { sendEMail } = require("./src/utils/mailer.js");
 const expressWinston = require('express-winston'); 
 const { defaultAdminAccount } = require("./src/controllers/auth.controller.js");
 const Router = require("./src/routes/index.js");
+const rateLimit = require('express-rate-limit');
 
 appServer.engine('.handlebars', engine({extname: '.handlebars'}));
 appServer.set('view engine', '.handlebars');
@@ -15,11 +16,18 @@ appServer.set('views', '../src/views');
 
 appServer.use("/api/v1", Router); 
  
- 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later."
+});
+
+appServer.use(limiter);
 const PORT = config.SERVER_PORT || 4000;
 appServer.all("*", errorMiddleWareModule.notFound);
 appServer.use(errorMiddleWareModule.errorHandler);
 appServer.use(expressWinston.logger(appLogger))
+
 appServer.listen(PORT, async () => {
   try {
     await dbConnect.MongoDB();

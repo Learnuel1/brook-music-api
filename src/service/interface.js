@@ -11,3 +11,4 @@ exports.removeAccount = async (id) => await AccountModule.delete(id);
 exports.defaultAccount = async ( details ) => await AccountModule.defaultRegistration( details )
 exports.removeAccountByEmail = async (email) => await AccountModule.deleteByEmail(email);
 exports.removeTempData = async (query) => await AccountModule.removeTemp(query);
+exports.createTemporalInfo = async (info) => await AccountModule.createTempAccount(info);

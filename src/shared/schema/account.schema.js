@@ -71,17 +71,3 @@ exports.ZLoginSchema = z.object({
     })
     .min(8, { message: "Password must be at least 8 characters"})
 })
-
-exports.ZResetLoginSchema = z.object({
-    currentPassword: z.string({
-        description: "Current password",
-        required_error: "Current password is required",
-        invalid_type_error: "Current password  is invalid",
-    }) 
-    .min(8,  { message: "Purrent password must be at least 8 characters"}),
-    newPassword: z.string({
-        description: "New  password",
-        required_error: "New Password is required",
-    })
-    .min(8, { message: "New password must be at least 8 characters"})
-})

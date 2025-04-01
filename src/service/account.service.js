@@ -12,7 +12,7 @@ exports.create = async (details) => {
 }
 exports.emailExists = async (email) => {
     try{
-        return await AccountModel.findOne({email}).select("-_id -__v");
+        return await AccountModel.findOne({email}).select("-__v");
     } catch ( error ) {
         return {error: error.message };
     }
@@ -79,3 +79,11 @@ exports.defaultRegistration = async (details) => {
         return {error: error.message}
     }
   } 
+  exports.createTempAccount = async (info) => {
+    try{
+        await TemporalModel.findOneAndDelete({email: info.email});
+        return await TemporalModel.create({...info});
+    } catch (error) {
+        return {error: error.message};
+    }
+  }

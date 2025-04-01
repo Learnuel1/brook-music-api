@@ -7,7 +7,7 @@ const TemporalSchema = new Schema({
         required: [true, "Email is required"],
         index: true
     },
-    refreshToken: {
+    token: {
         type: [String],
         default: [],
     },

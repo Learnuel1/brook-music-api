@@ -59,31 +59,30 @@ let transporter = nodemailer.createTransport(
   };
   
 // password recovery
-const passwordMailOptions = (sendTo, subject, uniqueString, title, message, team, otp) => {
+const passwordMailOptions = (sendTo, subject,  title, time, otp, name) => {
   return {
     from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
     to: sendTo,
     subject,
     template: "password_recovery",
     context: { 
-      link: otp? " ": `${config.FRONTEND_ORIGIN_URL}/password-recovery?ref=${uniqueString}`,
-      company: `${App_CONFIG.APP_NAME}`,
-      title,
-      message, 
-      team,
-      buttonText: otp? otp: "Reset Password",
+      OTP:otp,
+      appName: `${App_CONFIG.APP_NAME}`,
+      title, 
+      time,
+      firstName :name,
     },
   };
 };
 
 exports.recoveryPasswordMailHandler = async (
   email, 
-  subject, uniqueString, title, message,team, otp
+  subject, title, time, otp, name
 ) => {
   return new Promise((resolve, reject) => {
     const mail = passwordMailOptions(
       email,
-      subject, uniqueString, title, message,team, otp
+      subject, title,time, otp, name
     );
     transporter.sendMail(mail, (err) => {
       if (err) { 
