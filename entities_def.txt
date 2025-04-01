@@ -21,7 +21,7 @@ Account
 
 Profile
  -_id               -> ObjectId
- - account           -> ObjectId
+ - account           -> Account(ObjectId)
  - userId           -> String
  - stageName        -> String,
  - Nationality      -> String
@@ -32,4 +32,17 @@ Profile
 
                     ]
 
-
+EventListing 
+ - _id                -> ObjectId
+ - eventId            -> String
+ - createdBy          -> Account(ObjectId)
+ - title              -> String
+ - flyer              -> [{ id: String, url: String}],
+ - Date               -> Date
+ - time               -> time
+ - artist             -> [ObjectId]
+ - invite             -> [email]
+ - rejection          -> [ObjectId]
+ - tickPrice          -> Number
+ - createdAt          -> Date
+ - updatedAt          -> Date
