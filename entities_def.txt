@@ -1,7 +1,7 @@
 TemporalAccount 
   - _id          -> ObjectId
   - email        -> String
-  - refreshToken -> [String] 
+  - token        -> [String] 
   - otp          -> String
   
 Account

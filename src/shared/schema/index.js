@@ -1,6 +1,7 @@
-const { ZAccountSchema, ZLoginSchema, ZResetLoginSchema } = require("./account.schema")
+const { ZAccountSchema, ZLoginSchema } = require("./account.schema")
+const { ZResetLoginSchema } = require("./resetpassword.schema")
 module.exports = {
     ZAccountSchema,
-    ZLoginSchema,
+    ZLoginSchema, 
     ZResetLoginSchema,
 }

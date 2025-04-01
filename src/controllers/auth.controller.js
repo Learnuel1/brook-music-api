@@ -1,44 +1,45 @@
 const { hashSync, compareSync } = require("bcryptjs");
-const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount } = require("../service/interface");
-const { isValidEmail, shortIdGen, generateStrongPassword, isStrongPassword } = require("../utils/Generator");
+const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount, createTemporalInfo, removeTempData } = require("../service/interface");
+const { isValidEmail, shortIdGen, generateStrongPassword, OTPGen } = require("../utils/Generator");
 const { CONSTANTS, App_CONFIG } = require("../config");
 const logger = require("../logger");
-const { META, ERROR_FIELD } = require("../utils/actions");  
+const { META, ERROR_FIELD } = require("../utils/actions");
 const config = require("../config/env");
-const { sendEMailHandler } = require("../utils/mailer");
+const { sendEMailHandler, recoveryPasswordMailHandler } = require("../utils/mailer");
 const { APIError } = require("../utils/apiError");
 const jwt = require("jsonwebtoken");
 const { resBuilder } = require("../shared");
+const { findTemporalAccount } = require("../service/account.service");
 
 exports.defaultAdminAccount = async () => {
-    try {   
-        if(!isValidEmail(config.ADMIN_MAIL)) throw new Error("Invalid email");
-        const exist = await emailExist(config.ADMIN_MAIL)
-        if(exist) return logger.info(`${exist.type} already exist`, {
-          service: META.ACCOUNT,
-        });  
-        const password =  generateStrongPassword(12);
-        const info = {
-          password: hashSync(password, 10),
-          email:config.ADMIN_MAIL,
-          firstName: App_CONFIG.APP_NAME,
-          lastName: App_CONFIG.APP_NAME,
-          phoneNumber: config.ADMIN_NUMBER,
-          type: CONSTANTS.ACCOUNT_TYPE_OBJ.admin, 
-          userId: `BM${shortIdGen(13)}`,
-          status: CONSTANTS.ACCOUNT_STATUS_OBJ.verified,
-        } 
-        let account = await defaultAccount(info);
-        if(!account) return logger.info("Admin Account creation failed", {
-          service: META.ACCOUNT,
-        })
-        if(account.error) return logger.info(account.error, {
-          service: META.ACCOUNT,
-        });
-        logger.info('Admin Account created successfully', {
-          service: META.ACCOUNT,
-        });   
-        const emailTemp = ` 
+	try {
+		if (!isValidEmail(config.ADMIN_MAIL)) throw new Error("Invalid email");
+		const exist = await emailExist(config.ADMIN_MAIL)
+		if (exist) return logger.info(`${exist.type} already exist`, {
+			service: META.ACCOUNT,
+		});
+		const password = generateStrongPassword(12);
+		const info = {
+			password: hashSync(password, 10),
+			email: config.ADMIN_MAIL,
+			firstName: App_CONFIG.APP_NAME,
+			lastName: App_CONFIG.APP_NAME,
+			phoneNumber: config.ADMIN_NUMBER,
+			type: CONSTANTS.ACCOUNT_TYPE_OBJ.admin,
+			userId: `BM${shortIdGen(13)}`,
+			status: CONSTANTS.ACCOUNT_STATUS_OBJ.verified,
+		}
+		let account = await defaultAccount(info);
+		if (!account) return logger.info("Admin Account creation failed", {
+			service: META.ACCOUNT,
+		})
+		if (account?.error) return logger.info(account.error, {
+			service: META.ACCOUNT,
+		});
+		logger.info('Admin Account created successfully', {
+			service: META.ACCOUNT,
+		});
+		const emailTemp = ` 
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,7 +85,7 @@ exports.defaultAdminAccount = async () => {
 			<h2> Admin Login Credentials</h2>
 		</div>
 		<div class="content">
-			<p>Dear ${info.firstName },</p>
+			<p>Dear ${info.firstName},</p>
 			<p>We are excited to welcome you to ${App_CONFIG.APP_NAME}!</p>
 			<p>Your login credentials are as follows:</p>
 			<ul>
@@ -100,29 +101,29 @@ exports.defaultAdminAccount = async () => {
 </body>
 </html>
         `
-         // email admin login info
-         const result = await sendEMailHandler(info.email, "Account creation", emailTemp);
-         if (result.error) {
-           await removeAccountByEmail(info.email);
-           return logger.info(ERROR_FIELD.REG_FAILED, {
-            service: META.ACCOUNT,
-          });
-         }
-         logger.info('Admin login mail sent successfully', {
-          service: META.ACCOUNT,
-        });  
-      } catch (error) {
-        throw new Error(error);
-      }
-  };
+		// email admin login info
+		const result = await sendEMailHandler(info.email, "Account creation", emailTemp);
+		if (result.error) {
+			await removeAccountByEmail(info.email);
+			return logger.info(ERROR_FIELD.REG_FAILED, {
+				service: META.ACCOUNT,
+			});
+		}
+		logger.info('Admin login mail sent successfully', {
+			service: META.ACCOUNT,
+		});
+	} catch (error) {
+		throw new Error(error);
+	}
+};
 
 
-  exports.login = async (req, res, next) => {
+exports.login = async (req, res, next) => {
 	try {
 		let token = req.cookies?.BroOk_m;
 		if (!token) token = req.headers?.authorization?.split(' ')[1];
 		if (!token) token = req.headers?.cookie?.split('=')[1];
-        if(token) return next(APIError.unauthorized("You are already logged in"))
+		if (token) return next(APIError.unauthorized("You are already logged in"))
 		const { email, password } = req.body;
 		const exist = await emailExist(email.toLowerCase());
 		if (!exist) return next(APIError.notFound('User does not exist', 404));
@@ -130,30 +131,30 @@ exports.defaultAdminAccount = async () => {
 		if (!compareSync(password, exist.password))
 			return next(APIError.badRequest('Incorrect password'));
 		const foundUser = await getAccountByToken(token);
-		if (foundUser ) {
+		if (foundUser) {
 			jwt.verify(token, config.TOKEN_SECRETE, async (err, decoded) => {
 				if (err) {
 					const untrusted = await userExistById(decoded?.id);
-          if(untrusted){
-            untrusted.refreshToken = [];
-            untrusted.save();
+					if (untrusted) {
+						untrusted.refreshToken = [];
+						untrusted.save();
 
-          }
+					}
 				}
-				if(decoded?.email === email) { 
+				if (decoded?.email === email) {
 					logger.info('Token reuse detected', { service: META.AUTH });
 					return next(APIError.customError('You are already logged in', 403));
 				}
 			});
-      return next(APIError.customError('You are already logged in', 403));
+			return next(APIError.customError('You are already logged in', 403));
 		}
 
-		 
+
 		let payload = {};
 		payload = {
 			id: exist._id,
 			userId: exist.userId,
-			type: exist.type, 
+			type: exist.type,
 			firstName: exist.firstName,
 			lastName: exist.lastName,
 			email: exist.email,
@@ -163,9 +164,9 @@ exports.defaultAdminAccount = async () => {
 			expiresIn: "10m",
 		});
 		const newRefreshToken = jwt.sign(payload, config.REFRESH_TOKEN_SECRETE, {
-			expiresIn:   "20m",
+			expiresIn: "20m",
 		});
-		 
+
 		res.clearCookie('BroOk_m')
 		let newRefreshTokenArray = [];
 		if (token)
@@ -173,12 +174,12 @@ exports.defaultAdminAccount = async () => {
 				(rt) => rt !== token
 			);
 		else newRefreshTokenArray = exist.refreshToken;
-		exist.refreshToken = [...newRefreshTokenArray, newRefreshToken]; 
+		exist.refreshToken = [...newRefreshTokenArray, newRefreshToken];
 		exist.save();
-		const data =  resBuilder.removeAuth(exist.toObject());
+		const data = resBuilder.removeAuth(exist.toObject());
 		logger.info('Login successful', { service: META.AUTH });
 		const response = resBuilder.reqResponse('login successful', data, 'user', {
-			token:newToken,
+			token: newToken,
 			refreshToken: newRefreshToken,
 		});
 		res.cookie('BroOk_m', newToken, {
@@ -193,8 +194,8 @@ exports.defaultAdminAccount = async () => {
 	}
 };
 exports.logout = async (req, res, next) => {
-	try { 
-		const {refreshToken} = req.body;
+	try {
+		const { refreshToken } = req.body;
 		if (!refreshToken)
 			return next(APIError.unauthenticated('Refresh token is required'));
 		const isUser = await getAccountByToken(refreshToken);
@@ -202,48 +203,48 @@ exports.logout = async (req, res, next) => {
 		if (isUser?.error) return next(APIError.badRequest(isUser.error));
 		jwt.verify(refreshToken, config.REFRESH_TOKEN_SECRETE);
 		const refreshTokenArr = isUser.refreshToken.filter((rt) => rt !== refreshToken);
-			isUser.refreshToken = [...refreshTokenArr];
-			isUser.save();
-		
+		isUser.refreshToken = [...refreshTokenArr];
+		isUser.save();
+
 		logger.info('Logout successful', { service: META.AUTH });
 		res.clearCookie('BroOk_m');
 		res
 			.status(200)
 			.json({ success: true, msg: 'You have successfully logged out' });
-	} catch (error) { 
+	} catch (error) {
 		next(error);
 	}
 };
 
 
 exports.handleRefreshToken = async (req, res, next) => {
-	let token = req.cookies?.grub_ex;
+	let token = req.cookies?.BroOk_m;
 	if (!token) token = req.headers?.authorization?.split(' ')[1];
 	if (!token) token = req.headers?.cookie?.split('=')[1];
 	if (!token) return next(APIError.unauthenticated());
 	const { refreshToken } = req.body;
+	if (!refreshToken)
+		return next(APIError.badRequest('RefreshToken is required'));
+	const foundUser = await getAccountByToken(refreshToken);
 	res.clearCookie('BroOk_m', {
 		httpOnly: true,
 		sameSite: 'None',
 		secure: true,
 	});
-	if (!refreshToken)
-		return next(APIError.badRequest('RefreshToken is required'));
-	const foundUser = await getAccountByToken(token);
 	// Detected refresh toke reuse
 	if (!foundUser) {
 		const check = jwt.decode(token, config.TOKEN_SECRETE);
 		if (!check) return next(APIError.unauthenticated());
 		const usedToken = await userExistById(check.id);
-        if(usedToken){
-            usedToken.refreshToken = [];
-            usedToken.save();
-        }
+		if (usedToken) {
+			usedToken.refreshToken = [];
+			usedToken.save();
+		}
 		logger.info('Token reuse detected', { service: META.AUTH });
 		return next(APIError.customError(ERROR_FIELD.INVALID_TOKEN, 403));
 	}
 	const newRefreshTokenArr = foundUser.refreshToken.filter(
-		(rt) => rt !== token
+		(rt) => rt !== refreshToken
 	);
 	jwt.verify(
 		refreshToken,
@@ -258,10 +259,10 @@ exports.handleRefreshToken = async (req, res, next) => {
 			const payload = {
 				id: foundUser._id,
 				userId: foundUser.userId,
-				type: foundUser.type, 
+				type: foundUser.type,
 				firstName: foundUser.firstName,
 				lastName: foundUser.lastName,
-				email: foundUser.email, 
+				email: foundUser.email,
 			};
 			const token = jwt.sign(payload, config.TOKEN_SECRETE, {
 				expiresIn: '10m',
@@ -286,41 +287,155 @@ exports.handleRefreshToken = async (req, res, next) => {
 	);
 };
 
-exports.resetLogin = async (req, res, next) => {
+exports.updateLogin = async (req, res, next) => {
 	try {
-		const { currentPassword, newPassword } = req.body;
-		if (!req.userId) return next(APIError.unauthenticated());
-		if (!currentPassword)
-			return next(APIError.badRequest('Provide current password'));
-		if (!newPassword) return next(APIError.badRequest('Provide new password'));
-		if (!isStrongPassword(newPassword)) return next(APIError.badRequest('Password is weak'));
 		const check = await userExistById(req.user);
-		if (!check) return res.status(404).json({ error: 'Incorrect password' });
-		if (check.error) return res.status(404).json(check.error);
-		const verify = compareSync(currentPassword, check.password);
+		if (!check) return next(APIError.badRequest('Incorrect password'));
+		if (check.error) return next(APIError.badRequest(check.error));
+		const verify = compareSync(req.body.currentPassword, check.password);
 		if (!verify)
 			return next(APIError.customError('current password is incorrect', 400));
-		const hashedPass = hashSync(newPassword, 12);
-		const reset = await updateAccount(req.user, {password: hashedPass});
+		const hashedPass = hashSync(req.body.newPassword, 12);
+		if (compareSync(req.body.newPassword, check.password)) return next(APIError.badRequest("Choose an entirely new password"));
+		const reset = await updateAccount(req.user, { password: hashedPass });
 		if (!reset) return next(APIError.badRequest("Password reset failed, try again"));
-		if (reset?.error) return next(APIError.badRequest(reset.error, 400)); 
-		logger.info('Password reset successful', { meta: 'auth-service' }); 
+		if (reset?.error) return next(APIError.badRequest(reset.error, 400));
+		logger.info('Password reset successful', { meta: 'auth-service' });
 		res.status(200).json({ success: true, msg: 'Password reset successful' });
 	} catch (error) {
 		next(error);
 	}
 };
-exports.register = async (req, res, next ) => {
-    try {
-        const { password } = req.body;
-        req.body.password = hashSync(password, 10);
-        req.body.status = CONSTANTS.ACCOUNT_STATUS_OBJ.unverified;
-        const save = await createAccount(req.body);
-        if(!save) return next(APIError.badRequest("Registration failed, try again"));
-        if(save?.error) return next(APIError.badRequest(save.error));
-        logger.info("Registration completed successfully", {service: META.AUTH});
-        res.status(200).json({success: true, message: "Registration completed successfully"});
-    } catch (error ) {
-        next (error);
-    }
+exports.register = async (req, res, next) => {
+	try {
+		const { password } = req.body;
+		req.body.password = hashSync(password, 10);
+		req.body.status = CONSTANTS.ACCOUNT_STATUS_OBJ.unverified;
+		const save = await createAccount(req.body);
+		if (!save) return next(APIError.badRequest("Registration failed, try again"));
+		if (save?.error) return next(APIError.badRequest(save.error));
+		logger.info("Registration completed successfully", { service: META.AUTH });
+		res.status(200).json({ success: true, message: "Registration completed successfully" });
+	} catch (error) {
+		next(error);
+	}
 }
+
+exports.sendRecoverMail = async (req, res, next) => {
+	try {
+		const { email } = req.body;
+		if (!email) return next(APIError.badRequest('Email or Phone number is required'));
+		const userExist = await emailExist(email);
+		if (!userExist)
+			return next(APIError.notFound(ERROR_FIELD.ACCOUNT_NOT_FOUND));
+		if (userExist?.error) return next(APIError.badRequest(userExist.error));
+		const OTP = OTPGen();
+		const expires = 2;
+		const payload = { email, id: userExist.userId, type: userExist.type };
+		const token = jwt.sign(payload, config.TOKEN_SECRETE, { expiresIn: `${expires}m` });
+		const info = {
+			email,
+			token,
+			otp: OTP,
+		};
+		const save = await createTemporalInfo(info);
+		if (!save)
+			return next(APIError.notFound(ERROR_FIELD.NOT_FOUND));
+		if (save?.error) return next(APIError.badRequest(save.error));
+		logger.info('Recovery info saved successfully', { service: META.ACCOUNT });
+		const result = await recoveryPasswordMailHandler(
+			email,
+			"Password Recovery", "Password Recovery OTP",
+			expires, OTP, userExist.firstName
+		);
+		if (result.error)
+			return next(APIError.badRequest('Recovery mail failed to send'));
+		logger.info('Recovery mail sent successfully', { service: META.MAIL });
+		res.status(200).json({
+			...result,
+			msg: 'Recovery mail sent successfully',
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.verifyOTP = async (req, res, next) => {
+	try {
+		let otp = req.body.otp.toString();
+		if (!otp) return next(APIError.badRequest('OTP is required'));
+		const exist = await findTemporalAccount({ otp })
+		if (!exist) return next(APIError.notFound("OTP is invalid"))
+
+		//if token is invalid send return to registration page
+		if (exist) {
+			jwt.verify(exist.token, config.TOKEN_SECRETE, async (err, _decoded) => {
+				if (err) {
+					if (err.name !== 'TokenExpiredError') {
+						await removeTempData({ email: exist.email })
+						logger.info('Hacked token detected', { service: META.MAIL });
+						return next(APIError.customError("OTP Expired", 403));
+					}
+				}
+			});
+		}
+
+		const user = await emailExist(exist.email);
+		const payload = { id: user._id, email: exist.email, otp }
+		const recoveryToken = jwt.sign(payload, config.TOKEN_SECRETE, {
+			expiresIn: '3m',
+		});
+		await removeTempData({ email: exist.email })
+		res.cookie('BroOk_m', recoveryToken, {
+			httpOnly: false,
+			secure: true,
+			sameSite: 'none',
+			maxAge: 3 * 60 * 60 * 1000,
+		});
+		res
+			.status(200)
+			.json({ success: true, message: 'OTP verified Successfully', token: recoveryToken });
+	} catch (error) {
+		next(error)
+	}
+}
+
+
+exports.resetLogin = async (req, res, next) => {
+	try {
+		const check = await emailExist(req.email);
+		if (!check) return next(APIError.notFound("Account not found"));
+		if (check.error) return next(APIError.badRequest(check.error));
+		if (compareSync(req.body.newPassword, check.password)) return next(APIError.badRequest("Choose an entirely new password"));
+		const hashedPass = hashSync(req.body.newPassword, 10);
+		const reset = await updateAccount(check._id, { password: hashedPass });
+		if (!reset) return next(APIError.badRequest("Password reset failed, try again"));
+		if (reset?.error) return next(APIError.badRequest(reset.error, 400));
+		logger.info('Password reset successful', { meta: 'auth-service' });
+		res.status(200).json({ success: true, msg: 'Password reset successful' });
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.registerAccount = async (req, res, next) => {
+	try {
+		const { password } = req.body;
+		req.body.password = hashSync(password, 10);
+		const account = await createAccount(req.body);
+		if (!account) return next(APIError.badRequest("Account registration failed, try again"))
+		logger.info("Admin Account creation failed", {
+			service: META.ACCOUNT,
+		})
+		if (account.error) return next(APIError.badRequest(account.error))
+		logger.info(account.error, {
+			service: META.ACCOUNT,
+		});
+		logger.info('Admin Account created successfully', {
+			service: META.ACCOUNT,
+		});
+		res.status(200).json({ success: true, message: "Registration completed successfully" })
+	} catch (error) {
+		throw new Error(error);
+	}
+};

@@ -23,6 +23,7 @@ This is the backend API Server for the BROOK-MUSIC User, Artist, and Admins dash
 6. Follow the commit message convention bellow
 
 ## API DOCUMENTATION  
+[text](https://documenter.getpostman.com/view/20542554/2sB2cRCj59)
 
 ## Commit Message Pattern Convention
 You're to follow this convention when creating a commit message
@@ -52,3 +53,22 @@ Example
 - style
 - test
 
+## FOLDER STRUCTURE
+```
+brook-music/
+|
+src
+├───config
+│   └───database
+├───controllers
+├───logger
+├───middlewares
+├───models
+├───routes
+├───service
+├───shared
+│   ├───middleware
+│   └───schema
+├───utils
+└───views
+```
