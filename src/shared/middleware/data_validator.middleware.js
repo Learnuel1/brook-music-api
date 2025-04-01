@@ -1,7 +1,5 @@
 const Schemas = require('../schema');
 const { hashSync } = require('bcryptjs');
-const { default: mongoose, Types, ObjectId } = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 const {
   isStrongPassword,
   isPhoneNumberValid,

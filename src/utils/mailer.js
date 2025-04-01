@@ -2,7 +2,7 @@ const path = require("path")
 const { domainMail, mailAuth } = require("./mail.auth");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
-const { App_CONFIG, CONSTANTS } = require("../config");
+const { App_CONFIG } = require("../config");
 const config = require("../config/env");
 
 const handlebarsOptions = {
