@@ -1,6 +1,6 @@
-const { hashSync, compareSync, hash } = require("bcryptjs");
-const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount, createTemporalInfo } = require("../service/interface");
-const { isValidEmail, shortIdGen, generateStrongPassword, isStrongPassword, OTPGen } = require("../utils/Generator");
+const { hashSync, compareSync } = require("bcryptjs");
+const { emailExist, defaultAccount, removeAccountByEmail, getAccountByToken, userExistById, updateAccount, createAccount, createTemporalInfo, removeTempData } = require("../service/interface");
+const { isValidEmail, shortIdGen, generateStrongPassword, OTPGen } = require("../utils/Generator");
 const { CONSTANTS, App_CONFIG } = require("../config");
 const logger = require("../logger");
 const { META, ERROR_FIELD } = require("../utils/actions");  
@@ -9,6 +9,7 @@ const { sendEMailHandler, recoveryPasswordMailHandler } = require("../utils/mail
 const { APIError } = require("../utils/apiError");
 const jwt = require("jsonwebtoken");
 const { resBuilder } = require("../shared");
+const { findTemporalAccount } = require("../service/account.service");
 
 exports.defaultAdminAccount = async () => {
     try {   
@@ -29,10 +30,10 @@ exports.defaultAdminAccount = async () => {
           status: CONSTANTS.ACCOUNT_STATUS_OBJ.verified,
         } 
         let account = await defaultAccount(info);
-        if(!account) return logger.info("Admin Account creation failed", {
+        if(!account)  return logger.info("Admin Account creation failed", {
           service: META.ACCOUNT,
         })
-        if(account.error) return logger.info(account.error, {
+        if(account?.error) return logger.info(account.error, {
           service: META.ACCOUNT,
         });
         logger.info('Admin Account created successfully', {
@@ -243,7 +244,7 @@ exports.handleRefreshToken = async (req, res, next) => {
 		return next(APIError.customError(ERROR_FIELD.INVALID_TOKEN, 403));
 	}
 	const newRefreshTokenArr = foundUser.refreshToken.filter(
-		(rt) => rt !== token
+		(rt) => rt !== refreshToken
 	);
 	jwt.verify(
 		refreshToken,
@@ -286,12 +287,11 @@ exports.handleRefreshToken = async (req, res, next) => {
 	);
 };
 
-exports.resetLogin = async (req, res, next) => {
-	try {
-		 
+exports.updateLogin = async (req, res, next) => {
+	try { 
 		const check = await userExistById(req.user);
-		if (!check) return res.status(404).json({ error: 'Incorrect password' });
-		if (check.error) return res.status(404).json(check.error);
+		if (!check) return next(APIError.badRequest('Incorrect password' ));
+		if (check.error) return next(APIError.badRequest(check.error));
 		const verify = compareSync(req.body.currentPassword, check.password);
 		if (!verify)
 			return next(APIError.customError('current password is incorrect', 400));
@@ -331,12 +331,12 @@ exports.sendRecoverMail = async (req, res, next) => {
 	  if (userExist?.error) return next(APIError.badRequest(userExist.error)); 
 	  const OTP = OTPGen();
 	  const expires = 2;
-	   const payload = {email, id:userExist.userId};
+	   const payload = {email, id:userExist.userId, type: userExist.type};
 	   const token = jwt.sign(payload, config.TOKEN_SECRETE,{expiresIn:`${expires}m`});
 	  const info = {
 		email,
 		token,
-		otp: hashSync(OTP, 10),
+		otp: OTP,
 	  };
 	  const save = await createTemporalInfo(info);
 	  if (!save)
@@ -358,4 +358,84 @@ exports.sendRecoverMail = async (req, res, next) => {
 	} catch (error) {
 	  next(error);
 	}
+  };
+  
+exports.verifyOTP = async (req, res, next) => {
+	try { 
+	  let otp = req.body.otp.toString();
+	  if (!otp) return next(APIError.badRequest('OTP is required'));
+	  const exist = await  findTemporalAccount({otp})
+	  if(!exist) return next(APIError.notFound("OTP is invalid"))
+	  
+		//if token is invalid send return to registration page
+		if (exist) {
+		  jwt.verify(exist.token, config.TOKEN_SECRETE, async (err, _decoded) => {
+			if (err) {
+			  if (err.name !== 'TokenExpiredError') {
+				await removeTempData({email:exist.email})
+				logger.info('Hacked token detected', { service: META.MAIL  });
+				return next(APIError.customError("OTP Expired", 403));
+			  }
+			}
+		  });
+	  } 
+	  
+	  const user = await emailExist(exist.email);
+		const payload ={id:user._id, email:exist.email, otp}
+		const recoveryToken = jwt.sign(payload, config.TOKEN_SECRETE, {
+		  expiresIn: '3m',
+		});
+		await removeTempData({email:exist.email})
+		res.cookie('BroOk_m', recoveryToken,{
+		  httpOnly: false,
+		  secure: true,
+		  sameSite: 'none',
+		  maxAge: 3 * 60 * 60 * 1000,
+		});
+		res
+		  .status(200)
+		  .json({ success: true, message: 'OTP verified Successfully', token:recoveryToken});
+	}catch(error){
+	  next(error)
+	}
+  }
+
+  
+exports.resetLogin = async (req, res, next) => {
+	try { 
+		const check = await emailExist(req.email);
+		if (!check) return next(APIError.notFound( "Account not found" ));
+		if (check.error) return next(APIError.badRequest(check.error));
+		if(compareSync(req.body.newPassword, check.password)) return next(APIError.badRequest("Choose an entirely new password"));
+		const hashedPass = hashSync(req.body.newPassword, 10);
+		const reset = await updateAccount(check._id, {password: hashedPass});
+		if (!reset) return next(APIError.badRequest("Password reset failed, try again"));
+		if (reset?.error) return next(APIError.badRequest(reset.error, 400)); 
+		logger.info('Password reset successful', { meta: 'auth-service' }); 
+		res.status(200).json({ success: true, msg: 'Password reset successful' });
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.registerAccount = async (req, res, next) => {
+    try {   
+        const {password} = req.body;
+		req.body.password = hashSync(password, 10);
+        const account = await createAccount(req.body);
+        if(!account) return next(APIError.badRequest("Account registration failed, try again"))
+		logger.info("Admin Account creation failed", {
+          service: META.ACCOUNT,
+        })
+        if(account.error) return next(APIError.badRequest(account.error))
+		logger.info(account.error, {
+          service: META.ACCOUNT,
+        });
+        logger.info('Admin Account created successfully', {
+          service: META.ACCOUNT,
+        });   
+         res.status(200).json({success: true, message: "Registration completed successfully"})
+      } catch (error) {
+        throw new Error(error);
+      }
   };

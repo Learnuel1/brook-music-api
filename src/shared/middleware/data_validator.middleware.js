@@ -2,7 +2,7 @@ const Schemas = require("../schema")
 const { hashSync } = require("bcryptjs");
 const { default: mongoose, Types, ObjectId } = require("mongoose");
 const { v4: uuidv4 } = require('uuid');
-const { isStrongPassword, isPhoneNumberValid, shortIdGen } = require("../../utils/Generator");
+const { isStrongPassword, isPhoneNumberValid, shortIdGen, isValidEmail } = require("../../utils/Generator");
 const { APIError } = require("../../utils/apiError");
 module.exports = {
   validateRequestData(schema, data = {}) { 
@@ -11,12 +11,12 @@ module.exports = {
         if(!schema) return next(APIError.badRequest("Schema name is required"));
         if ( schema === "ZAccountSchema") {
           req.body.userId = `BM${shortIdGen(13)}`;
-          if(!isStrongPassword(req.body.password)) return next(APIError.badRequest("Password is weak"));
+          if(isValidEmail(req.body.email) === false) return next(APIError.badRequest("Email is invalid"));
+          if(isStrongPassword(req.body.password) === false) return next(APIError.badRequest("Password is weak"));
         }
         if ( schema === "ZResetLoginSchema") {
           if(isStrongPassword(req.body.newPassword) === false) return next(APIError.badRequest("New Password is weak"));
-        }
-        console.log(schema)
+        } 
     Schemas[`${schema}`].parse(req.body); 
      next();
    }catch(error){

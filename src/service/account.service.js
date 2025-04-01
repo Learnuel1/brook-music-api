@@ -33,7 +33,7 @@ exports.accountExistById = async ( id ) => {
 }
 exports.findTemporalAccount = async (query) => {
     try{
-        return await AccountModel.findOne(query);
+        return await TemporalModel.findOne(query);
     } catch (error) {
         return {error: error.message };
     }

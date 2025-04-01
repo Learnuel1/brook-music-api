@@ -8,8 +8,9 @@ const TemporalSchema = new Schema({
         index: true
     },
     token: {
-        type: [String],
-        default: [],
+        type: String,
+        trim: true,
+        
     },
     otp: {
         type: String,
