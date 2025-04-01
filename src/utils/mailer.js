@@ -2,7 +2,8 @@ const path = require("path")
 const { domainMail, mailAuth } = require("./mail.auth");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
-const { App_CONFIG } = require("../config");
+const { App_CONFIG, CONSTANTS } = require("../config");
+const config = require("../config/env");
 
 const handlebarsOptions = {
   viewEngine: {
@@ -92,6 +93,42 @@ exports.recoveryPasswordMailHandler = async (
   });
 };
  
+const invitationMailOptions = (sendTo, subject,  invitation) => {
+  return {
+    from: `${App_CONFIG.APP_NAME} ${domainMail.mail()}`,
+    to: sendTo,
+    subject,
+    template: "event_invitation",
+    context: { 
+      email:invitation.email,
+      appName: `${App_CONFIG.APP_NAME}`,
+      event:invitation.title, 
+      time:invitation.time,
+      firstName :invitation.firstName,
+      fee: invitation.fee,
+      date: invitation.date,
+      location: invitation.location,
+      invite_link: `${config.FRONTEND_ORIGIN_URL/invitation.eventId}/?email=${invitation.email}`,
+    },
+  };
+};
+exports.invitationMailHandler = async (
+  email, 
+  subject, invitation
+) => {
+  return new Promise((resolve, reject) => {
+    const mail = invitationMailOptions(
+      email,
+      subject, invitation
+    );
+    transporter.sendMail(mail, (err) => {
+      if (err) { 
+        return reject(err);
+      }
+      return resolve({ success: true });
+    });
+  });
+};
 // GENERAL EMAIL 
 const sendEmailOptions = (sendTo, subject, message, attachment) => {
   return {

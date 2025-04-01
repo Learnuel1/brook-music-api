@@ -30,6 +30,12 @@ module.exports = {
           req.body.account = req.user
           req.body.userId = req.userId;
         }
+        if( schema === "ZEventSchema") {
+          req.body.eventId = shortIdGen(20);
+          req.body.createdBy = req.user;
+          req.body.date = new Date(req.body.date);
+           req.body.ticketPrice = parseFloat(req.body?.ticketPrice)
+        }
         Schemas[`${schema}`].parse(req.body);
         next();
       } catch (error) {

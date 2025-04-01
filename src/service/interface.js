@@ -1,5 +1,6 @@
 const AccountModule = require("./account.service");
 const ProfileModule = require("./profile.service");
+const EventModule = require("./event.service");
 // ACCOUNT SECTION
 exports.createAccount = async (details) => await AccountModule.create(details);
 exports.emailExist = async (email) => AccountModule.emailExists(email);
@@ -18,3 +19,11 @@ exports.getExistingPicture = async (userId) => await ProfileModule.existingProfi
 exports.updateAccountProfile = async (account, info) => await ProfileModule.update(account, info)
 exports.viewProfile = async (userId) => await ProfileModule.view(userId);
 exports.viewArtistProfiles = async (userId) => await ProfileModule.viewArtist(userId);
+
+// EVENT SECTION
+exports.createEvent = async (details) => await EventModule.create(details);
+exports.updateEvent = async (eventid, details) => await EventModule.update(eventid, details);
+exports.getEvents = async (query) => await EventModule.events(query);
+exports.getEventById = async (eventId) => await EventModule.eventExistById(eventId);
+exports.removeEvent = async (eventId) => await EventModule.delete(eventId);
+exports.sendInvite = async (eventId, invite) => await EventModule.inviteArtist(eventId, invite);

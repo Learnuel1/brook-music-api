@@ -13,21 +13,11 @@ const adminRequired = async (req, res, next) => {
     if (!token) token = req.headers?.cookie?.split("=")[1];
     if (!token) return next(APIError.unauthenticated());
     const payload = jwt.verify(token, config.TOKEN_SECRETE);
-    if (payload?.type?.toLowerCase() !== CONSTANTS.ACCOUNT_TYPE_OBJ.admin && payload?.type.toLowerCase() !== CONSTANTS.ACCOUNT_TYPE_OBJ.dev)
+    if (payload?.type?.toLowerCase() !== CONSTANTS.ACCOUNT_TYPE_OBJ.admin)
       return next(APIError.unauthorized());
     req.user = new Types.ObjectId(payload.id)
-    req.userId = payload.userId;
-    req.userRole = payload.role; 
+    req.userId = payload.userId; 
     req.userType = payload.type;
-    const userInfo = {}// = await userExistById(new Types.ObjectId(payload.id));
-   if(!userInfo || userInfo === null) return next(APIError.unauthenticated());
-    req.body.createdBy = {
-      name: `${userInfo.firstName} ${userInfo.lastName}`,
-      id: payload.id,
-      role: payload.role,
-      type: payload.type,
-    }
-    req.user = userInfo._id;
     next();
   } catch (error) {
     if (error.message === ERROR_FIELD.JWT_EXPIRED) next(APIError.unauthenticated());

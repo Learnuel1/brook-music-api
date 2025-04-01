@@ -21,14 +21,25 @@ exports.ZEventSchema = z.object({
             url: z.string().url("Invalid URL"),
         })
     ).optional(),
-    Date: z.date(),
+    date: z.date({
+        description: "Event date",
+        required_error: "Event date is required",
+        invalid_type_error: "Date format is invalid",
+    }),
     time: z.string(),   
     invite: z.array(z.string().email("Invalid email")).optional(),
-    rejection: z.array(z.string()),
-    tickPrice: z.number({
+    rejection: z.array(z.string()).optional(),
+    ticketPrice: z.number({
         description: "Event ticket price",
         required_error: "Event title price is required",
         invalid_type_error: "Event ticket price is invalid"
     }).nonnegative("tickPrice must be a non-negative number"),
+    location: z.string({
+        description: "Event Location",
+        required_error: "Event location is required",
+        invalid_type_error: "Event location is in a wrong format",
+    }).min(3, {message: "Event location must be at least 3 characters"})
+    .max(150)
+    .trim(),
 });
  

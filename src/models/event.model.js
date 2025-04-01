@@ -1,6 +1,6 @@
 const { Schema, Types, model } =  require('mongoose');;
 
-const eventSchema = new Schema({
+const EventSchema = new Schema({
     eventId: {
         type: String,
         required: [true, "Event ID is required"],
@@ -31,7 +31,7 @@ const eventSchema = new Schema({
         ],
         default: [ ],
     },
-    Date: {
+    date: {
         type: Date,
         required: true,
     },
@@ -46,11 +46,18 @@ const eventSchema = new Schema({
         type: [String],
         default: []
     },
-    tickPrice: {
+    location: {
+        type: String,
+        required: true,
+        index: true,
+        trim: true,
+    },
+    ticketPrice: {
         type: Number,
         required: [true, "Event ticket price is required"],
         min: [0, "Ticket price must be a non-negative number"],
     },
-});
+}, {timestamps: true, versionKey: false});
 
-module.exports = model('Event', eventSchema);
+const EventModel = model("Event", EventSchema);
+module.exports = EventModel;
