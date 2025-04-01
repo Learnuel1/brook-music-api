@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const logger = require("./logger");
-const { CONFIG, CORS_WHITELISTS } = require("./config");
+const {  CORS_WHITELISTS, App_CONFIG } = require("./config");
 const { errorHandler } = require("./middlewares/error.middleware");
 const expressWinston = require("express-winston");
 dotenv.config();
@@ -27,7 +27,7 @@ app.use(expressWinston.logger(logger));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use("/api/v1/status", (_req, res) => {
-  res.send({ msg: `Yes!... Welcome to ${CONFIG.APP_NAME} API` });
+  res.send({ msg: `Yes!... Welcome to ${App_CONFIG.APP_NAME} API` });
 });
 app.use(errorHandler);
 module.exports = app;
