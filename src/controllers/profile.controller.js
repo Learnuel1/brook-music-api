@@ -1,5 +1,5 @@
 const logger = require("../logger");
-const { getExistingPicture, updateAccountProfile, viewProfile } = require("../service/interface");
+const { getExistingPicture, updateAccountProfile, viewProfile, viewArtistProfiles } = require("../service/interface");
 const { META } = require("../utils/actions");
 const { APIError } = require("../utils/apiError");
 const { deleteFileFromCloudinary, uploadSingleFileToCloudinary } = require("../utils/cloudinary");
@@ -44,6 +44,18 @@ exports.getProfile = async ( req, res, next ) => {
         if(info?.error) return next (APIError.badRequest(info.error));
         logger.info("Profile retrieved successfully", {service: META.ACCOUNT});
         res.status(200).json({success: true, profile: info});
+    } catch (error) {
+        next (error)
+    }
+}
+exports.getProfiles = async (req, res, next) => {
+    try {
+        const {userId} = req.query;
+        const info = await viewArtistProfiles(userId);
+        if(!info) return next (APIError.badRequest("Profile view failed, try again"));
+        if(info?.error) return next (APIError.badRequest(info.error));
+        logger.info("Profile retrieved successfully", {service: META.ACCOUNT});
+        res.status(200).json({success: true, artists: info});
     } catch (error) {
         next (error)
     }

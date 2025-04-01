@@ -17,3 +17,4 @@ exports.createTemporalInfo = async (info) => await AccountModule.createTempAccou
 exports.getExistingPicture = async (userId) => await ProfileModule.existingProfile(userId);
 exports.updateAccountProfile = async (account, info) => await ProfileModule.update(account, info)
 exports.viewProfile = async (userId) => await ProfileModule.view(userId);
+exports.viewArtistProfiles = async (userId) => await ProfileModule.viewArtist(userId);
