@@ -2,10 +2,15 @@ const { default: mongoose } = require("mongoose");
 const { CONSTANTS } = require("../config");
 const { AccountModel } = require("../models/account.model");
 const TemporalModel = require("../models/temporal.model");
+const ProfileModel = require("../models/profile.model");
 
 exports.create = async (details) => {
     try{
-        return await AccountModel.create({...details});
+        const info = await AccountModel.create({...details});
+        if(info) {
+            await ProfileModel.create({account:info._id, userId: details.userId});
+        }
+        return info;
     } catch (error) {
         return {error: error.message };
     }

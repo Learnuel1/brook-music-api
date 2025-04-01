@@ -1,7 +1,7 @@
 TemporalAccount 
   - _id          -> ObjectId
   - email        -> String
-  - token        -> [String] 
+  - token        -> String
   - otp          -> String
   
 Account
@@ -19,4 +19,17 @@ Account
  - createdAt            -> Date
  - updatedAt            -> Date
 
-Events
+Profile
+ -_id               -> ObjectId
+ - account           -> ObjectId
+ - userId           -> String
+ - stageName        -> String,
+ - Nationality      -> String
+ - picture          -> [ {
+                        id: String,
+                        url: String
+                        }
+
+                    ]
+
+

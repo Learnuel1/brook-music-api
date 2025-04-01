@@ -26,6 +26,10 @@ module.exports = {
           if (isStrongPassword(req.body.newPassword) === false)
             return next(APIError.badRequest('New Password is weak'));
         }
+        if( schema === "ZProfileSchema"){
+          req.body.account = req.user
+          req.body.userId = req.userId;
+        }
         Schemas[`${schema}`].parse(req.body);
         next();
       } catch (error) {

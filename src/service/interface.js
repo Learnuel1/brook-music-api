@@ -1,5 +1,5 @@
 const AccountModule = require("./account.service");
-
+const ProfileModule = require("./profile.service");
 // ACCOUNT SECTION
 exports.createAccount = async (details) => await AccountModule.create(details);
 exports.emailExist = async (email) => AccountModule.emailExists(email);
@@ -12,3 +12,8 @@ exports.defaultAccount = async ( details ) => await AccountModule.defaultRegistr
 exports.removeAccountByEmail = async (email) => await AccountModule.deleteByEmail(email);
 exports.removeTempData = async (query) => await AccountModule.removeTemp(query);
 exports.createTemporalInfo = async (info) => await AccountModule.createTempAccount(info);
+
+// PROFILE SECTION 
+exports.getExistingPicture = async (userId) => await ProfileModule.existingProfile(userId);
+exports.updateAccountProfile = async (account, info) => await ProfileModule.update(account, info)
+exports.viewProfile = async (userId) => await ProfileModule.view(userId);
