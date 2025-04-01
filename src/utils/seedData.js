@@ -1,6 +1,5 @@
 const removeAuth = (dataObj) => {
   // eslint-disable-next-line no-unused-vars
-  console.log(dataObj)
   const {password, refreshToken, ...data} = dataObj;
   return data;
 }
