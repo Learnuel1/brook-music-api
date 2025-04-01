@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Invitation - {{appName}}</title>
+    <style>
+        /* Reset styles for email compatibility */
+        body {
+            margin: 0;
+            padding: 0;
+            min-width: 100%;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f6f6f6;
+            color: #333333;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #eeeeee;
+        }
+        
+        .logo {
+            max-width: 200px;
+            height: auto;
+        }
+        
+        .content {
+            padding: 30px 20px;
+        }
+        
+        .event-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666666;
+            font-size: 0.9em;
+            border-top: 2px solid #eeeeee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="[LOGO_URL]" alt="{{appName}}" class="logo">
+        </div>
+        
+        <div class="content">
+            <h2>🎤 You're Invited to Perform!</h2>
+            <p>Dear {{firstName}},</p>
+            <p>We're excited to invite you to perform at:</p>
+            
+            <div class="event-details">
+                <h3>{{event}}</h3>
+                <p>📅 Date: {{date}}</p> 
+                <p>📅 Time: {{time}}</p> 
+                <p>📍 Location: {{location}}</p>
+                <p>💵 Offer: {{fee}}</p>
+            </div>
+
+            <p> </p> 
+            <a href="{{invite_link}}" class="cta-button">ACCEPT</a>
+
+            <p>Best regards,<br>
+            {{appName}}
+        </div>
+
+        <div class="footer">
+            <p>This email was sent by Music Booking Platform</p>
+            <p>
+                
+            </p>
+            <p>Need help? Contact support@musicbooking.com</p>
+        </div>
+    </div>
+</body>
+</html>

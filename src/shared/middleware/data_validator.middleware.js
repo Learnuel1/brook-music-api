@@ -1,7 +1,5 @@
 const Schemas = require('../schema');
 const { hashSync } = require('bcryptjs');
-const { default: mongoose, Types, ObjectId } = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 const {
   isStrongPassword,
   isPhoneNumberValid,
@@ -29,6 +27,12 @@ module.exports = {
         if( schema === "ZProfileSchema"){
           req.body.account = req.user
           req.body.userId = req.userId;
+        }
+        if( schema === "ZEventSchema") {
+          req.body.eventId = shortIdGen(20);
+          req.body.createdBy = req.user;
+          req.body.date = new Date(req.body.date);
+           req.body.ticketPrice = parseFloat(req.body?.ticketPrice)
         }
         Schemas[`${schema}`].parse(req.body);
         next();

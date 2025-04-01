@@ -25,6 +25,8 @@ This is the backend API Server for the BROOK-MUSIC User, Artist, and Admins dash
 ## API DOCUMENTATION  
 [text](https://documenter.getpostman.com/view/20542554/2sB2cRCj59)
 
+## API BASE URL
+[text](https://brook-music-api.onrender.com/api/v1)
 ## Commit Message Pattern Convention
 You're to follow this convention when creating a commit message
 
